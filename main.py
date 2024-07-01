@@ -1,20 +1,22 @@
 # -*- coding: utf-8 -*-
 
 from PySide6.QtCore import Qt, Slot
-import PySide6.QtWidgets as QT
-from __feature__ import snake_case, true_property
+from PySide6.QtWidgets import *
+
 import sys
 
-# Main window class
-class MyWindow(QT.QWidget):
+# Класс основного меню
+class MainWindow(QMainWindow):
     def __init__(self):
-        QT.QWidget.__init__(self)
+        super().__init__()
+        self.setWindowTitle('FFmpeg PyQT')
+        
 
-# Main
+# Основная программа
 if __name__ == '__main__':
-    app = QT.QApplication(sys.argv)
+    app = QApplication(sys.argv)
 
-    window = MyWindow()
+    window = MainWindow()
     window.show()
 
     sys.exit(app.exec_())
