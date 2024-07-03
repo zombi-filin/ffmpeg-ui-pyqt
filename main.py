@@ -11,6 +11,19 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle('FFmpeg PyQT')
         
+        
+        self.target_label = QLabel(parent = self, text = 'Path')
+        self.target_file_name = QLineEdit(parent = self)
+        
+        self.layout = QGridLayout()
+        self.layout.addWidget(self.target_label, 0 , 0)
+        self.layout.addWidget(self.target_file_name, 0 , 1)
+
+        container = QWidget()
+        container.setLayout(self.layout)
+        self.setCentralWidget(container)
+        
+
 
 # Основная программа
 if __name__ == '__main__':
