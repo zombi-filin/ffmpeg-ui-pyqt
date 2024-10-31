@@ -1,2 +1,2 @@
-# ffmpeg-pyqt
+# ffmpeg-ui-pyqt
 PyQt оболочка для ffmpeg

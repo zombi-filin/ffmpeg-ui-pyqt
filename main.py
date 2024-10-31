@@ -6,7 +6,9 @@ from PySide6.QtWidgets import *
 import subprocess
 import sys
 
-version = '0.0.1'
+VERSION = '0.0.1'
+
+RESIZE_EDIT_WIDTH = 50
 
 # Класс основного меню
 class MainWindow(QMainWindow):
@@ -14,7 +16,7 @@ class MainWindow(QMainWindow):
     # region Init
     def __init__(self):
         super().__init__()
-        self.setWindowTitle(f'FFmpeg PyQT {version}')
+        self.setWindowTitle(f'FFmpeg PyQT {VERSION}')
         self.setFixedWidth(800)
         self.setFixedHeight(600)
         
@@ -37,13 +39,17 @@ class MainWindow(QMainWindow):
         # region Изменение размера
         self.form_label_resize_width = QLabel(parent=self, text='Ширина')
         self.form_edit_src_width = QLineEdit(parent=self, readOnly=True)
+        self.form_edit_src_width.setFixedWidth(RESIZE_EDIT_WIDTH)
         self.form_label_resize_arrow_width = QLabel(parent=self, text='-->')
         self.form_edit_dest_width = QLineEdit(parent=self, maxLength=4)
+        self.form_edit_dest_width.setFixedWidth(RESIZE_EDIT_WIDTH)
 
         self.form_label_resize_height = QLabel(parent=self, text='Высота')
         self.form_edit_src_height = QLineEdit(parent=self, readOnly=True)
+        self.form_edit_src_height.setFixedWidth(RESIZE_EDIT_WIDTH)
         self.form_label_resize_arrow_height = QLabel(parent=self, text='-->')
         self.form_edit_dest_height = QLineEdit(parent=self, maxLength=4)
+        self.form_edit_dest_height.setFixedWidth(RESIZE_EDIT_WIDTH)
 
         
         self.form_layout_resize = QHBoxLayout()
@@ -51,7 +57,9 @@ class MainWindow(QMainWindow):
         self.form_layout_resize.addWidget(self.form_edit_src_width)
         self.form_layout_resize.addWidget(self.form_label_resize_arrow_width)
         self.form_layout_resize.addWidget(self.form_edit_dest_width)
-
+        
+        self.form_layout_resize.addSpacing(32)
+        
         self.form_layout_resize.addWidget(self.form_label_resize_height)
         self.form_layout_resize.addWidget(self.form_edit_src_height)
         self.form_layout_resize.addWidget(self.form_label_resize_arrow_height)
