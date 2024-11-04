@@ -64,6 +64,8 @@ class MainWindow(QMainWindow):
         self.form_layout_resize.addWidget(self.form_edit_src_height)
         self.form_layout_resize.addWidget(self.form_label_resize_arrow_height)
         self.form_layout_resize.addWidget(self.form_edit_dest_height)
+        
+        self.form_layout_resize.addStretch(1)
 
         self.form_group_box_resize = QGroupBox('Изменение размера изображения')
         self.form_group_box_resize.setCheckable(True)
