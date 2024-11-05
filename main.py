@@ -90,11 +90,13 @@ class MainWindow(QMainWindow):
     def form_button_target_open_click(self):
         file_name = QFileDialog.getOpenFileName(self, 'Файл для конвертации', '/', 'Видео файл (*.avi *.mov *.mp4 *.m4a *.3gp *.3g2 *.mj2 *.mpeg)')
         self.form_edit_target_file_name.setText(file_name[0])
-        cmd = f'ffprobe -v error -show_entries stream=width,height -of default=noprint_wrappers=1:nokey=1 -i {file_name[0]}'
+        cmd = f'ffprobe -v error -show_entries stream=width,height,duration -of default=noprint_wrappers=1:nokey=1 -i {file_name[0]}'
         result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         result_parse = result.stdout.split('\n')
         self.input_file_width = int(result_parse[0])
         self.input_file_height = int(result_parse[1])
+
+        duration = int(float(result_parse[2]))
 
         self.form_edit_src_width.setText(str(self.input_file_width))
         self.form_edit_dest_width.setText(str(self.input_file_width))
