@@ -69,6 +69,7 @@ class MainWindow(QMainWindow):
 
         self.form_group_box_resize = QGroupBox('Изменение размера изображения')
         self.form_group_box_resize.setCheckable(True)
+        self.form_group_box_resize.setChecked(False)
         self.form_group_box_resize.setLayout(self.form_layout_resize)
         # endregion Resize
 
@@ -97,6 +98,10 @@ class MainWindow(QMainWindow):
         self.input_file_height = int(result_parse[1])
 
         duration = int(float(result_parse[2]))
+        hours = int(duration / 3600)
+        duration -= hours * 3600
+        minutes = int(duration / 60)
+        seconds = duration - (minutes * 60)
 
         self.form_edit_src_width.setText(str(self.input_file_width))
         self.form_edit_dest_width.setText(str(self.input_file_width))
