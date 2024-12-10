@@ -72,12 +72,21 @@ class MainWindow(QMainWindow):
 
         # region Обрезка видео по времени
         
-        self.form_slider_time_crop = QSlider(Qt.Orientation.Horizontal)
-        self.form_slider_time_crop.setMaximum(0)
+        self.form_spin_from_time_crop = QSpinBox()
+        self.form_spin_from_time_crop.setMinimum(0)
+        self.form_spin_from_time_crop.setMaximum(0)
+        self.form_spin_from_time_crop.valueChanged.connect(self.form_spin_time_crop_valueChanged)
+        
+
+        self.form_spin_to_time_crop = QSpinBox()
+        self.form_spin_to_time_crop.setMinimum(0)
+        self.form_spin_to_time_crop.setMaximum(0)
+        self.form_spin_to_time_crop.valueChanged.connect(self.form_spin_time_crop_valueChanged)
         
 
         self.form_layout_time_crop = QHBoxLayout()
-        self.form_layout_time_crop.addWidget(self.form_slider_time_crop)
+        self.form_layout_time_crop.addWidget(self.form_spin_from_time_crop)
+        self.form_layout_time_crop.addWidget(self.form_spin_to_time_crop)
 
         self.form_group_box_time_crop = QGroupBox('Обрезка по времени')
         self.form_group_box_time_crop.setCheckable(True)
@@ -114,7 +123,12 @@ class MainWindow(QMainWindow):
         self.input_file_height = int(result_parse[1])
 
         duration = int(float(result_parse[2]))
-        self.form_slider_time_crop.setMaximum(duration)
+        
+        self.form_spin_from_time_crop.setValue(0)
+
+        self.form_spin_to_time_crop.setMaximum(duration)
+        self.form_spin_to_time_crop.setValue(duration)
+
 
         hours = int(duration / 3600)
         duration -= hours * 3600
@@ -125,6 +139,12 @@ class MainWindow(QMainWindow):
         self.form_edit_dest_width.setText(str(self.input_file_width))
         self.form_edit_src_height.setText(str(self.input_file_height))
         self.form_edit_dest_height.setText(str(self.input_file_height))
+
+    def form_spin_time_crop_valueChanged(self, value):
+        self.form_spin_from_time_crop.setMaximum(self.form_spin_to_time_crop.value() - 1)
+        self.form_spin_to_time_crop.setMinimum(self.form_spin_from_time_crop.value() + 1)
+
+    def form_spin_time_crop_textFromValue(self, value):
         pass
     # endregion Functions
 
