@@ -2,6 +2,7 @@
 
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import *
+from MyQtWidgets import *
 
 import os
 import subprocess
@@ -10,6 +11,7 @@ import sys
 VERSION = '0.0.1'
 
 RESIZE_EDIT_WIDTH = 50
+CROP_TIME_SPIN_WIDTH = 70
 
 # Класс основного меню
 class MainWindow(QMainWindow):
@@ -72,21 +74,25 @@ class MainWindow(QMainWindow):
 
         # region Обрезка видео по времени
         
-        self.form_spin_from_time_crop = QSpinBox()
+        self.form_spin_from_time_crop = QTimeSpinBox()
         self.form_spin_from_time_crop.setMinimum(0)
         self.form_spin_from_time_crop.setMaximum(0)
+        self.form_spin_from_time_crop.setFixedWidth(CROP_TIME_SPIN_WIDTH)
         self.form_spin_from_time_crop.valueChanged.connect(self.form_spin_time_crop_valueChanged)
         
 
-        self.form_spin_to_time_crop = QSpinBox()
+        self.form_spin_to_time_crop = QTimeSpinBox()
         self.form_spin_to_time_crop.setMinimum(0)
         self.form_spin_to_time_crop.setMaximum(0)
+        self.form_spin_to_time_crop.setFixedWidth(CROP_TIME_SPIN_WIDTH)
         self.form_spin_to_time_crop.valueChanged.connect(self.form_spin_time_crop_valueChanged)
         
 
         self.form_layout_time_crop = QHBoxLayout()
         self.form_layout_time_crop.addWidget(self.form_spin_from_time_crop)
+        self.form_layout_time_crop.addSpacing(32)
         self.form_layout_time_crop.addWidget(self.form_spin_to_time_crop)
+        self.form_layout_time_crop.addStretch(1)
 
         self.form_group_box_time_crop = QGroupBox('Обрезка по времени')
         self.form_group_box_time_crop.setCheckable(True)
