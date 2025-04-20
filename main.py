@@ -7,6 +7,7 @@ from MyQtWidgets import *
 import os
 import subprocess
 import sys
+import time
 
 VERSION = '0.0.1'
 
@@ -79,14 +80,16 @@ class MainWindow(QMainWindow):
         self.form_spin_from_time_crop.setMaximum(0)
         self.form_spin_from_time_crop.setFixedWidth(CROP_TIME_SPIN_WIDTH)
         self.form_spin_from_time_crop.valueChanged.connect(self.form_spin_time_crop_valueChanged)
-        
+        self.form_spin_from_time_crop.textChanged.connect(self.form_spin_time_crop_textChanged)
+
 
         self.form_spin_to_time_crop = QTimeSpinBox()
         self.form_spin_to_time_crop.setMinimum(0)
         self.form_spin_to_time_crop.setMaximum(0)
         self.form_spin_to_time_crop.setFixedWidth(CROP_TIME_SPIN_WIDTH)
         self.form_spin_to_time_crop.valueChanged.connect(self.form_spin_time_crop_valueChanged)
-        
+        self.form_spin_to_time_crop.textChanged.connect(self.form_spin_time_crop_textChanged)
+        # self.form_spin_to_time_crop.keyPressEvent()
 
         self.form_layout_time_crop = QHBoxLayout()
         self.form_layout_time_crop.addWidget(self.form_spin_from_time_crop)
@@ -100,11 +103,22 @@ class MainWindow(QMainWindow):
         self.form_group_box_time_crop.setLayout(self.form_layout_time_crop)
         # endregion
 
+        #region Пуск
+        self.form_button_start = QPushButton(text='Пуск', parent=self)
+        self.form_button_start.clicked.connect(self.form_button_start_click)
+        self.form_label_message = QLabel(text='Ожидание', parent=self)
+        self.form_layout_start = QHBoxLayout()
+        self.form_layout_start.addWidget(self.form_button_start)
+        self.form_layout_start.addWidget(self.form_label_message)
+        self.form_layout_start.addStretch(1)
+        #endregion
+
         # region Mainform
         self.form_layout = QFormLayout()
         self.form_layout.addRow(self.form_group_box_target)
         self.form_layout.addRow(self.form_group_box_resize)
         self.form_layout.addRow(self.form_group_box_time_crop)
+        self.form_layout.addRow(self.form_layout_start)
         # endregion Mainform
 
         # region Container 
@@ -119,8 +133,6 @@ class MainWindow(QMainWindow):
     def form_button_target_open_click(self):
         file_name = QFileDialog.getOpenFileName(self, 'Файл для конвертации', '/', 'Видео файл (*.avi *.mov *.mp4 *.m4a *.3gp *.3g2 *.mj2 *.mpeg)')
         self.src_file_name = file_name[0]
-        src_file_name_split = os.path.splitext(self.src_file_name)
-        self.dest_file_name = src_file_name_split[0]+"-out"+src_file_name_split[1]
         self.form_edit_target_file_name.setText(self.src_file_name)
         cmd = f'ffprobe -v error -show_entries stream=width,height,duration -of default=noprint_wrappers=1:nokey=1 -i {file_name[0]}'
         result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -149,9 +161,16 @@ class MainWindow(QMainWindow):
     def form_spin_time_crop_valueChanged(self, value):
         self.form_spin_from_time_crop.setMaximum(self.form_spin_to_time_crop.value() - 1)
         self.form_spin_to_time_crop.setMinimum(self.form_spin_from_time_crop.value() + 1)
-
-    def form_spin_time_crop_textFromValue(self, value):
+    
+    def form_spin_time_crop_textChanged(self, value):
         pass
+    
+    def form_button_start_click(self):
+        src_file_name_split = os.path.splitext(self.src_file_name)
+        dest_file_name = src_file_name_split[0] + '-out-' + str(int(time.time())) + src_file_name_split[1]
+        self.form_button_start.setEnabled(False)
+
+        self.form_button_start.setEnabled(True)
     # endregion Functions
 
 # Основная программа
