@@ -1,18 +1,29 @@
 # -*- coding: utf-8 -*-
 
+from MyQtWidgets import *
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import *
-from MyQtWidgets import *
 
+import io
+import json
 import os
+import re
 import subprocess
 import sys
+import threading
 import time
 
 VERSION = '0.0.1'
 
 RESIZE_EDIT_WIDTH = 50
 CROP_TIME_SPIN_WIDTH = 70
+
+def timeToSec(text:str):
+    '''
+    Функция возвращает количество секунд из строки вида 00:00:00
+    '''
+    text_split = text.split(':')
+    return (int(text_split[0]) * 3600 ) + (int(text_split[1]) * 60) + int(text_split[2])
 
 # Класс основного меню
 class MainWindow(QMainWindow):
@@ -23,7 +34,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f'FFmpeg PyQT {VERSION}')
         self.setFixedWidth(800)
         self.setFixedHeight(600)
-        
+
+        self.src_file_name = ''
+
         # region Target
         self.input_file_width = 0
         self.input_file_height = 0
@@ -45,12 +58,13 @@ class MainWindow(QMainWindow):
         self.form_edit_src_width.setFixedWidth(RESIZE_EDIT_WIDTH)
         self.form_edit_dest_width = QLineEdit(parent=self, maxLength=4)
         self.form_edit_dest_width.setFixedWidth(RESIZE_EDIT_WIDTH)
+        self.form_edit_dest_width.editingFinished.connect(self.form_edit_dest_width_editingFinished)
 
         self.form_edit_src_height = QLineEdit(parent=self, readOnly=True)
         self.form_edit_src_height.setFixedWidth(RESIZE_EDIT_WIDTH)
         self.form_edit_dest_height = QLineEdit(parent=self, maxLength=4)
         self.form_edit_dest_height.setFixedWidth(RESIZE_EDIT_WIDTH)
-
+        self.form_edit_dest_height.editingFinished.connect(self.form_edit_dest_height_editingFinished)
         
         self.form_layout_resize = QHBoxLayout()
         self.form_layout_resize.addWidget(QLabel(parent=self, text='Ширина'))
@@ -105,6 +119,7 @@ class MainWindow(QMainWindow):
 
         #region Пуск
         self.form_button_start = QPushButton(text='Пуск', parent=self)
+        self.form_button_start.setEnabled(False)
         self.form_button_start.clicked.connect(self.form_button_start_click)
         self.form_label_message = QLabel(text='Ожидание', parent=self)
         self.form_layout_start = QHBoxLayout()
@@ -131,16 +146,25 @@ class MainWindow(QMainWindow):
 
     # region Functions
     def form_button_target_open_click(self):
-        file_name = QFileDialog.getOpenFileName(self, 'Файл для конвертации', '/', 'Видео файл (*.avi *.mov *.mp4 *.m4a *.3gp *.3g2 *.mj2 *.mpeg)')
+        if self.src_file_name == '':
+            open_dir = os.path.dirname(__file__)
+        else:
+            open_dir = os.path.dirname(self.src_file_name)
+        file_name = QFileDialog.getOpenFileName(self, 'Файл для конвертации', open_dir, 'Видео файл (*.avi *.mov *.mp4 *.m4a *.3gp *.3g2 *.mj2 *.mpeg)')
+        
         self.src_file_name = file_name[0]
         self.form_edit_target_file_name.setText(self.src_file_name)
-        cmd = f'ffprobe -v error -show_entries stream=width,height,duration -of default=noprint_wrappers=1:nokey=1 -i {file_name[0]}'
-        result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        result_parse = result.stdout.split('\n')
-        self.input_file_width = int(result_parse[0])
-        self.input_file_height = int(result_parse[1])
-
-        duration = int(float(result_parse[2]))
+        
+        command = f'ffprobe -v quiet -print_format json -show_format -show_streams -i "{file_name[0]}"'
+        result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        result_json = json.loads(result.stdout)
+        
+        duration = int(float(result_json['format']['duration']))
+        for stream in result_json['streams']:
+            if stream['codec_type'] != 'video':
+                continue
+            self.input_file_width = int(float(stream['width']))
+            self.input_file_height = int(float(stream['height']))
         
         self.form_spin_from_time_crop.setValue(0)
 
@@ -157,6 +181,22 @@ class MainWindow(QMainWindow):
         self.form_edit_dest_width.setText(str(self.input_file_width))
         self.form_edit_src_height.setText(str(self.input_file_height))
         self.form_edit_dest_height.setText(str(self.input_file_height))
+        
+        self.form_button_start.setEnabled(True)
+
+    def form_edit_dest_height_editingFinished(self):
+        try:
+            dest_height = int(self.form_edit_dest_height.text())
+        except ValueError:
+            self.form_edit_dest_height.setText(str(self.input_file_height))
+        self.form_edit_dest_width.setText(str(int((dest_height * self.input_file_width) / self.input_file_height)))
+
+    def form_edit_dest_width_editingFinished(self):
+        try:
+            dest_width = int(self.form_edit_dest_width.text())
+        except ValueError:
+            self.form_edit_dest_width.setText(str(self.input_file_width))
+        self.form_edit_dest_height.setText(str(int((dest_width * self.input_file_height) / self.input_file_width)))
 
     def form_spin_time_crop_valueChanged(self, value):
         self.form_spin_from_time_crop.setMaximum(self.form_spin_to_time_crop.value() - 1)
@@ -165,12 +205,44 @@ class MainWindow(QMainWindow):
     def form_spin_time_crop_textChanged(self, value):
         pass
     
-    def form_button_start_click(self):
+    def processed(self):
         src_file_name_split = os.path.splitext(self.src_file_name)
         dest_file_name = src_file_name_split[0] + '-out-' + str(int(time.time())) + src_file_name_split[1]
         self.form_button_start.setEnabled(False)
+        
+        if self.form_group_box_resize.isChecked() or self.form_group_box_time_crop.isChecked():
+            self.form_label_message.setText('Начали')
+            command = f'ffmpeg '
+            if self.form_group_box_time_crop.isChecked():
+               command += f'-ss {self.form_spin_from_time_crop.text()} '
+               command += f'-to {self.form_spin_to_time_crop.text()} '
+            
+            command += f' -i "{self.src_file_name}" '
+            
+            if self.form_group_box_resize.isChecked():
+                dest_width = self.form_edit_dest_width.text()
+                dest_height = self.form_edit_dest_height.text()
 
+                command += f' -vf "scale={dest_width}:{dest_height}" '
+
+            command += f'-progress pipe:1 "{dest_file_name}"'
+            
+            sec_len = timeToSec(self.form_spin_to_time_crop.text()) - timeToSec(self.form_spin_from_time_crop.text())
+            regex = r'out_time=(.+)\.'
+            process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+
+            for line in io.TextIOWrapper(process.stdout, encoding="utf-8"):
+                if 'out_time=' in line:
+                    matches = re.findall(regex,line)
+                    progress = int((timeToSec(matches[0]) / sec_len) * 100)
+                    self.form_label_message.setText(f'Обработка: {progress}%')
+
+            self.form_label_message.setText('Готово')
         self.form_button_start.setEnabled(True)
+
+    def form_button_start_click(self):
+        th = threading.Thread(target = self.processed)
+        th.start()
     # endregion Functions
 
 # Основная программа
